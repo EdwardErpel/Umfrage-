@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Abstimmung – Wer kommt?</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f1117;
+      --card: #1a1d27;
+      --card2: #20243a;
+      --accent1: #f7c948;
+      --accent2: #5bc4e0;
+      --text: #f0f0f0;
+      --muted: #7a7d8c;
+      --radius: 20px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 16px 60px;
+      overflow-x: hidden;
+    }
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.18;
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::before { width: 400px; height: 400px; background: var(--accent1); top: -100px; left: -100px; }
+    body::after  { width: 350px; height: 350px; background: var(--accent2); bottom: -80px; right: -80px; }
+    .wrapper { position: relative; z-index: 1; width: 100%; max-width: 420px; }
+    header { text-align: center; margin-bottom: 32px; }
+    .emoji { font-size: 3rem; display: block; margin-bottom: 10px; animation: float 3s ease-in-out infinite; }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+    h1 { font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; letter-spacing:-0.5px; line-height:1.1; }
+    h1 span { color: var(--accent1); }
+    .subtitle { margin-top:8px; color:var(--muted); font-size:0.95rem; }
+    .live-badge {
+      display:inline-flex; align-items:center; gap:6px;
+      background:rgba(91,196,224,0.12); border:1px solid rgba(91,196,224,0.3);
+      color:var(--accent2); font-size:0.75rem; font-family:'Syne',sans-serif;
+      font-weight:600; letter-spacing:1px; text-transform:uppercase;
+      padding:5px 12px; border-radius:100px; margin-bottom:14px;
+    }
+    .live-dot { width:7px; height:7px; background:var(--accent2); border-radius:50%; animation:pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
+    .vote-card {
+      background:var(--card); border-radius:var(--radius); padding:22px 24px;
+      margin-bottom:14px; display:flex; align-items:center;
+      justify-content:space-between; gap:16px;
+      border:1.5px solid rgba(255,255,255,0.07); transition:border-color 0.2s;
+    }
+    .vote-card:hover { border-color:rgba(255,255,255,0.14); }
+    .card-left { display:flex; align-items:center; gap:14px; }
+    .card-icon { font-size:2rem; flex-shrink:0; }
+    .card-label { font-family:'Syne',sans-serif; font-size:1.05rem; font-weight:600; white-space:nowrap; }
+    .counter { display:flex; align-items:center; gap:12px; flex-shrink:0; }
+    .btn {
+      width:38px; height:38px; border-radius:50%; border:none; cursor:pointer;
+      font-size:1.1rem; font-weight:700; display:flex; align-items:center;
+      justify-content:center; transition:transform 0.1s,opacity 0.2s;
+      padding:0; flex-shrink:0; line-height:1; user-select:none;
+    }
+    .btn:active { transform:scale(0.85); }
+    .btn:disabled { opacity:0.3; cursor:not-allowed; }
+    .btn-minus { background:rgba(255,255,255,0.08); color:var(--text); }
+    .btn-minus:hover { background:rgba(255,255,255,0.14); }
+    .btn-plus { background:var(--accent1); color:#111; }
+    .btn-plus:hover { opacity:0.88; }
+    .count-num { font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; min-width:32px; text-align:center; }
+    @keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.35)} 100%{transform:scale(1)} }
+    .pop { animation:pop 0.18s ease; }
+    .summary {
+      background:var(--card2); border-radius:var(--radius); padding:22px 24px;
+      margin-bottom:16px; border:1.5px solid rgba(91,196,224,0.2);
+    }
+    .summary-title { font-family:'Syne',sans-serif; font-size:0.75rem; text-transform:uppercase; letter-spacing:2px; color:var(--accent2); margin-bottom:12px; }
+    .summary-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; font-size:0.95rem; color:var(--muted); }
+    .summary-row+.summary-row { border-top:1px solid rgba(255,255,255,0.05); }
+    .summary-val { font-weight:500; font-family:'Syne',sans-serif; color:var(--text); }
+    .summary-total { margin-top:12px; padding-top:12px; border-top:1.5px solid rgba(255,255,255,0.1); display:flex; justify-content:space-between; align-items:center; }
+    .total-label { font-family:'Syne',sans-serif; font-size:1rem; font-weight:600; }
+    .total-val { font-family:'Syne',sans-serif; font-size:1.5rem; font-weight:800; color:var(--accent1); }
+    .sync-indicator { text-align:center; font-size:0.78rem; color:var(--muted); margin-bottom:14px; height:18px; }
+    .sync-indicator.syncing { color:var(--accent1); }
+    .sync-indicator.synced  { color:var(--accent2); }
+    .sync-indicator.error   { color:#ff6b6b; }
+    .wa-btn {
+      width:100%; background:#25D366; color:#fff; border:none;
+      border-radius:var(--radius); padding:18px 24px;
+      font-family:'Syne',sans-serif; font-size:1.05rem; font-weight:700;
+      cursor:pointer; display:flex; align-items:center; justify-content:center;
+      gap:10px; transition:opacity 0.2s,transform 0.15s;
+    }
+    .wa-btn:hover { opacity:0.9; }
+    .wa-btn:active { transform:scale(0.97); }
+    .copy-btn {
+      width:100%; background:var(--card); color:var(--text);
+      border:1.5px solid rgba(255,255,255,0.12); border-radius:var(--radius);
+      padding:16px 24px; font-family:'Syne',sans-serif; font-size:1rem;
+      font-weight:600; cursor:pointer; display:flex; align-items:center;
+      justify-content:center; gap:10px; transition:border-color 0.2s,color 0.2s;
+      margin-top:10px;
+    }
+    .copy-btn:hover { border-color:rgba(255,255,255,0.25); }
+    .copy-btn.copied { border-color:var(--accent2); color:var(--accent2); }
+    .reset-btn {
+      width:100%; background:transparent; color:var(--muted);
+      border:1.5px solid rgba(255,255,255,0.08); border-radius:var(--radius);
+      padding:13px 24px; font-family:'DM Sans',sans-serif; font-size:0.9rem;
+      cursor:pointer; margin-top:10px; transition:border-color 0.2s,color 0.2s;
+    }
+    .reset-btn:hover { border-color:rgba(255,255,255,0.2); color:var(--text); }
+    footer { text-align:center; margin-top:24px; color:var(--muted); font-size:0.8rem; }
+    .loading { text-align:center; color:var(--muted); padding:40px; font-family:'Syne',sans-serif; }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+  <header>
+    <span class="emoji">🎉</span>
+    <div class="live-badge"><span class="live-dot"></span> Live – geteilt</div>
+    <h1>Wer <span>kommt?</span></h1>
+    <p class="subtitle">Stimme ab und teile es per WhatsApp</p>
+  </header>
+
+  <div id="app-loading" class="loading">Lädt...</div>
+
+  <div id="app-content" style="display:none; width:100%">
+    <div class="sync-indicator" id="sync"></div>
+
+    <div class="vote-card">
+      <div class="card-left">
+        <span class="card-icon">🧑</span>
+        <span class="card-label">Erwachsene</span>
+      </div>
+      <div class="counter">
+        <button class="btn btn-minus" id="adults-minus" onclick="change('adults',-1)">−</button>
+        <span class="count-num" id="adults-count">0</span>
+        <button class="btn btn-plus" onclick="change('adults',1)">+</button>
+      </div>
+    </div>
+
+    <div class="vote-card">
+      <div class="card-left">
+        <span class="card-icon">🧒</span>
+        <span class="card-label">Kinder</span>
+      </div>
+      <div class="counter">
+        <button class="btn btn-minus" id="children-minus" onclick="change('children',-1)">−</button>
+        <span class="count-num" id="children-count">0</span>
+        <button class="btn btn-plus" onclick="change('children',1)">+</button>
+      </div>
+    </div>
+
+    <div class="summary">
+      <div class="summary-title">Zusammenfassung</div>
+      <div class="summary-row"><span>🧑 Erwachsene</span><span class="summary-val" id="sum-adults">0</span></div>
+      <div class="summary-row"><span>🧒 Kinder</span><span class="summary-val" id="sum-children">0</span></div>
+      <div class="summary-total">
+        <span class="total-label">Gesamt</span>
+        <span class="total-val" id="sum-total">0</span>
+      </div>
+    </div>
+
+    <button class="wa-btn" onclick="shareWhatsApp()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+        <path d="M12 0C5.373 0 0 5.373 0 12c0 2.116.549 4.103 1.508 5.836L0 24l6.335-1.482A11.944 11.944 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.808 9.808 0 01-5.028-1.378l-.36-.214-3.733.872.899-3.645-.235-.374A9.786 9.786 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/>
+      </svg>
+      Per WhatsApp teilen
+    </button>
+
+    <button class="copy-btn" id="copy-btn" onclick="copyLink()">🔗 Link kopieren</button>
+    <button class="reset-btn" onclick="resetAll()">↺ Zurücksetzen</button>
+  </div>
+
+  <footer>Alle Änderungen werden live für alle gespeichert</footer>
+</div>
+
+<script>
+  const BIN_ID  = '6a25b4d6da38895dfe95ed5c';
+  const API_KEY = '$2a$10$jx0pet6fhZWEQItYKF2GLO42dWssHzSto63x4JAWV5sBMc5Fulj8m';
+  const BASE    = 'https://api.jsonbin.io/v3/b/' + BIN_ID;
+
+  let state = { adults: 0, children: 0 };
+  let syncTimer = null;
+  let saving = false;
+
+  async function load() {
+    try {
+      const r = await fetch(BASE + '/latest', {
+        method: 'GET',
+        headers: {
+          'X-Master-Key': API_KEY,
+          'X-Bin-Meta': 'false'
+        }
+      });
+      if (r.ok) {
+        const d = await r.json();
+        state = d;
+        render();
+      } else {
+        setSync('error');
+      }
+    } catch(e) {
+      setSync('error');
+    }
+    document.getElementById('app-loading').style.display = 'none';
+    document.getElementById('app-content').style.display = 'block';
+  }
+
+  async function save() {
+    if (saving) return;
+    saving = true;
+    setSync('syncing');
+    try {
+      const r = await fetch(BASE, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Master-Key': API_KEY
+        },
+        body: JSON.stringify(state)
+      });
+      if (r.ok) {
+        setSync('synced');
+      } else {
+        setSync('error');
+      }
+    } catch(e) {
+      setSync('error');
+    }
+    saving = false;
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(() => setSync(''), 2000);
+  }
+
+  function setSync(s) {
+    const el = document.getElementById('sync');
+    el.className = 'sync-indicator' + (s ? ' ' + s : '');
+    if (s === 'syncing') el.textContent = '⟳ Wird gespeichert...';
+    else if (s === 'synced') el.textContent = '✓ Gespeichert';
+    else if (s === 'error') el.textContent = '⚠ Verbindungsfehler';
+    else el.textContent = '';
+  }
+
+  function render() {
+    document.getElementById('adults-count').textContent   = state.adults;
+    document.getElementById('children-count').textContent = state.children;
+    document.getElementById('sum-adults').textContent     = state.adults;
+    document.getElementById('sum-children').textContent   = state.children;
+    document.getElementById('sum-total').textContent      = state.adults + state.children;
+    document.getElementById('adults-minus').disabled   = state.adults === 0;
+    document.getElementById('children-minus').disabled = state.children === 0;
+  }
+
+  function pop(id) {
+    const el = document.getElementById(id);
+    el.classList.remove('pop');
+    void el.offsetWidth;
+    el.classList.add('pop');
+  }
+
+  function change(key, delta) {
+    state[key] = Math.max(0, state[key] + delta);
+    render();
+    pop(key + '-count');
+    save();
+  }
+
+  function resetAll() {
+    state = { adults: 0, children: 0 };
+    render();
+    save();
+  }
+
+  function shareWhatsApp() {
+    const total = state.adults + state.children;
+    const msg =
+      '🎉 *Anmeldung – Wer kommt?*\n\n' +
+      '🧑 Erwachsene: *' + state.adults + '*\n' +
+      '🧒 Kinder: *' + state.children + '*\n' +
+      '──────────────\n' +
+      '👥 Gesamt: *' + total + ' Person' + (total !== 1 ? 'en' : '') + '*';
+    window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+  }
+
+  function copyLink() {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = '✓ Link kopiert!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = '🔗 Link kopieren'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  setInterval(async () => {
+    if (saving) return;
+    try {
+      const r = await fetch(BASE + '/latest', {
+        headers: { 'X-Master-Key': API_KEY, 'X-Bin-Meta': 'false' }
+      });
+      if (r.ok) {
+        const d = await r.json();
+        state = d;
+        render();
+      }
+    } catch(e) {}
+  }, 5000);
+
+  load();
+</script>
+</body>
+</html>
